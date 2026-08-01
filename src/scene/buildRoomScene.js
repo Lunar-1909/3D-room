@@ -172,6 +172,16 @@ const sphere = (parent, material, radius, position, scale = [1, 1, 1], name = "s
   return mesh;
 };
 
+const plane = (parent, material, size, position, rotation = [0, 0, 0], name = "plane") => {
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), material);
+  mesh.name = name;
+  mesh.position.set(position[0], position[1], position[2]);
+  mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+};
+
 const makeLedStrip = (parent, material, start, end, thickness = 0.035) => {
   const dx = end[0] - start[0];
   const dy = end[1] - start[1];
@@ -204,6 +214,54 @@ const setHighlight = (helper, target) => {
   helper.setFromObject(target);
 };
 
+const createWindowPanel = (parent, mats, position, width, height, label) => {
+  const group = new THREE.Group();
+  group.name = label;
+  group.position.set(position[0], position[1], position[2]);
+  parent.add(group);
+
+  box(group, mats.black, [width + 0.2, height + 0.2, 0.045], [0, 0, -0.018], `${label} black trim`);
+  box(group, mats.glass, [width, height, 0.055], [0, 0, 0.012], `${label} glass`);
+
+  for (let i = -1; i <= 1; i += 1) {
+    box(group, mats.black, [0.04, height, 0.07], [(i * width) / 4, 0, 0.055], `${label} vertical mullion`);
+  }
+  for (let i = -1; i <= 1; i += 1) {
+    box(group, mats.black, [width, 0.04, 0.07], [0, (i * height) / 4, 0.055], `${label} horizontal mullion`);
+  }
+
+  const leafMat = new THREE.MeshStandardMaterial({ color: "#c45a22", roughness: 0.72 });
+  for (let i = 0; i < 34; i += 1) {
+    const leaf = box(group, leafMat, [0.08 + Math.random() * 0.06, 0.04 + Math.random() * 0.08, 0.018], [
+      -width * 0.44 + Math.random() * width * 0.88,
+      -height * 0.42 + Math.random() * height * 0.92,
+      0.09
+    ], `${label} autumn leaf`);
+    leaf.rotation.z = Math.random() * TAU;
+  }
+
+  return group;
+};
+
+const createFloorPlant = (parent, mats, position, scale = 1, name = "floor plant") => {
+  const group = new THREE.Group();
+  group.name = name;
+  group.position.set(position[0], position[1], position[2]);
+  group.scale.setScalar(scale);
+  parent.add(group);
+
+  cyl(group, mats.soil, 0.22, 0.18, 0.42, [0, 0.21, 0], [0, 0, 0], 28, `${name} pot`);
+  for (let i = 0; i < 13; i += 1) {
+    const leaf = sphere(group, mats.plant, 0.17, [
+      Math.cos((i / 13) * TAU) * (0.18 + Math.random() * 0.16),
+      0.58 + Math.random() * 0.38,
+      Math.sin((i / 13) * TAU) * (0.18 + Math.random() * 0.16)
+    ], [0.45, 1.45, 0.18], `${name} leaf`);
+    leaf.rotation.set(Math.random() * 0.7, Math.random() * TAU, Math.random() * 0.7);
+  }
+  return group;
+};
+
 const createRoomShell = (scene, mats, interactives) => {
   const shell = new THREE.Group();
   shell.name = "room-shell";
@@ -224,10 +282,13 @@ const createRoomShell = (scene, mats, interactives) => {
   const ceiling = box(shell, mats.ceiling, [15.2, 0.08, 8.3], [0, 3.12, 0.08], "star ceiling");
   ceiling.receiveShadow = false;
 
-  makeLedStrip(shell, mats.neonCyan, [-7.05, 3.02, -3.62], [7.05, 3.02, -3.62], 0.04);
-  makeLedStrip(shell, mats.neonPink, [7.05, 3.02, -3.62], [7.05, 3.02, 3.86], 0.04);
-  makeLedStrip(shell, mats.neonViolet, [-7.05, 3.02, 3.86], [7.05, 3.02, 3.86], 0.04);
-  makeLedStrip(shell, mats.neonGreen, [-7.05, 3.02, -3.62], [-7.05, 3.02, 3.86], 0.04);
+  makeLedStrip(shell, mats.neonCyan, [-7.05, 2.94, -3.62], [7.05, 2.94, -3.62], 0.035);
+  makeLedStrip(shell, mats.neonPink, [7.05, 2.94, -3.62], [7.05, 2.94, 3.86], 0.035);
+  makeLedStrip(shell, mats.neonViolet, [-7.05, 2.94, 3.86], [7.05, 2.94, 3.86], 0.035);
+  makeLedStrip(shell, mats.neonGreen, [-7.05, 2.94, -3.62], [-7.05, 2.94, 3.86], 0.035);
+
+  createWindowPanel(shell, mats, [-5.15, 1.65, -4.03], 2.2, 1.55, "wide back window");
+  createWindowPanel(shell, mats, [2.65, 1.65, -4.03], 2.35, 1.55, "desk view window");
 
   const glassDoor = new THREE.Group();
   glassDoor.name = "balcony glass";
@@ -410,10 +471,10 @@ const createCurtain = (scene, mats, animator, interactives) => {
 const createSofaDining = (scene, mats, animator, interactives) => {
   const group = new THREE.Group();
   group.name = "sofa corner";
-  group.position.set(3.3, 0, -0.75);
+  group.position.set(2.55, 0, -0.45);
   scene.add(group);
 
-  box(group, mats.carpet, [3.1, 0.05, 1.95], [0, 0.03, 0.18], "neon rug");
+  box(group, mats.carpet, [5.4, 0.045, 2.9], [0.5, 0.028, 0.42], "large patterned rug");
   box(group, mats.charcoal, [1.65, 0.42, 0.62], [-0.55, 0.36, -0.18], "sofa seat");
   box(group, mats.charcoal, [1.65, 0.78, 0.18], [-0.55, 0.72, -0.55], "sofa back");
   box(group, mats.graphite, [0.18, 0.48, 0.62], [-1.48, 0.42, -0.18], "sofa arm left");
@@ -421,15 +482,17 @@ const createSofaDining = (scene, mats, animator, interactives) => {
   box(group, mats.neonPink, [1.2, 0.045, 0.05], [-0.55, 0.88, -0.45], "sofa led");
   box(group, mats.blue, [0.42, 0.16, 0.36], [-0.92, 0.67, -0.16], "blue cushion");
   box(group, mats.yellow, [0.42, 0.16, 0.36], [-0.23, 0.67, -0.16], "yellow cushion");
+  box(group, mats.white, [0.5, 0.13, 0.34], [0.18, 0.68, -0.16], "white cushion");
 
   const table = new THREE.Group();
-  table.position.set(0.95, 0, 0.42);
+  table.position.set(0.9, 0, 0.55);
   box(table, mats.woodDark, [1.08, 0.09, 0.68], [0, 0.51, 0], "coffee table top");
   box(table, mats.chrome, [0.06, 0.46, 0.06], [-0.42, 0.25, -0.24], "table leg");
   box(table, mats.chrome, [0.06, 0.46, 0.06], [0.42, 0.25, -0.24], "table leg");
   box(table, mats.chrome, [0.06, 0.46, 0.06], [-0.42, 0.25, 0.24], "table leg");
   box(table, mats.chrome, [0.06, 0.46, 0.06], [0.42, 0.25, 0.24], "table leg");
   cyl(table, mats.white, 0.12, 0.09, 0.13, [-0.22, 0.64, -0.08], [0, 0, 0], 28, "cup");
+  box(table, mats.green, [0.3, 0.05, 0.22], [0.24, 0.62, 0.12], "book");
   group.add(table);
 
   makeInfo(group, catalog.sofa, null, interactives);
@@ -463,6 +526,87 @@ const createSofaDining = (scene, mats, animator, interactives) => {
       });
       return open ? "Cánh bàn đã gập xuống gọn" : "Cánh bàn đã mở rộng";
     },
+    interactives
+  );
+};
+
+const createSoftDecor = (scene, mats, interactives) => {
+  const group = new THREE.Group();
+  group.name = "soft decor";
+  scene.add(group);
+
+  const lounge = new THREE.Group();
+  lounge.name = "floor lounge mattress";
+  lounge.position.set(5.25, 0, 0.95);
+  lounge.rotation.y = -0.22;
+  box(lounge, mats.mattress, [1.55, 0.2, 0.86], [0, 0.18, 0], "floor mattress");
+  box(lounge, mats.blanket, [1.52, 0.08, 0.34], [0, 0.33, 0.22], "folded throw blanket");
+  box(lounge, mats.white, [0.54, 0.13, 0.32], [-0.42, 0.39, -0.2], "floor pillow white");
+  box(lounge, mats.blue, [0.48, 0.12, 0.3], [0.24, 0.38, -0.2], "floor pillow blue");
+  group.add(lounge);
+  makeInfo(
+    lounge,
+    {
+      name: "Nệm thư giãn + gối sàn",
+      price: "2.900.000 vnd",
+      use: "Khu nằm đọc sách/chill nhanh cạnh ban công, làm phòng đỡ trống và mềm hơn."
+    },
+    null,
+    interactives
+  );
+
+  const lamp = new THREE.Group();
+  lamp.name = "warm floor lamp";
+  lamp.position.set(4.55, 0, -2.35);
+  cyl(lamp, mats.black, 0.055, 0.055, 1.05, [0, 0.72, 0], [0, 0, 0], 18, "lamp stem");
+  cyl(lamp, mats.black, 0.24, 0.16, 0.32, [0, 1.35, 0], [0, 0, 0], 28, "lamp shade");
+  sphere(lamp, mats.yellow, 0.12, [0, 1.27, 0], [1, 0.85, 1], "warm bulb");
+  group.add(lamp);
+  makeInfo(
+    lamp,
+    {
+      name: "Đèn cây ánh sáng ấm",
+      price: "1.450.000 vnd",
+      use: "Tăng sáng cho góc sofa và tạo cảm giác phòng thật hơn vào buổi tối."
+    },
+    null,
+    interactives
+  );
+
+  const art = new THREE.Group();
+  art.name = "abstract wall art";
+  art.position.set(-1.1, 1.92, -4.0);
+  box(art, mats.white, [1.85, 1.0, 0.05], [0, 0, 0], "canvas base");
+  box(art, mats.green, [0.72, 0.38, 0.06], [0.38, 0.05, 0.04], "green paint block");
+  box(art, mats.yellow, [0.58, 0.24, 0.06], [-0.3, 0.27, 0.05], "yellow paint block");
+  box(art, mats.black, [0.72, 0.16, 0.06], [0.02, -0.2, 0.06], "black brush stroke");
+  box(art, mats.red, [0.34, 0.18, 0.06], [0.44, -0.34, 0.06], "red paint accent");
+  group.add(art);
+  makeInfo(
+    art,
+    {
+      name: "Tranh canvas trừu tượng",
+      price: "1.250.000 vnd",
+      use: "Mảng trang trí sáng giống ảnh mẫu, cân bằng lại LED gaming trong phòng."
+    },
+    null,
+    interactives
+  );
+
+  const plants = new THREE.Group();
+  plants.name = "decor plants";
+  group.add(plants);
+  createFloorPlant(plants, mats, [-2.2, 0, -2.7], 1.05, "plant near tv");
+  createFloorPlant(plants, mats, [5.95, 0, -2.15], 0.95, "plant near window");
+  createFloorPlant(plants, mats, [6.45, 0, 2.1], 0.75, "small balcony plant");
+  makeInfo(
+    plants,
+    {
+      name: "Cây xanh trang trí",
+      price: "2.200.000 vnd",
+      use: "Làm phòng sáng và thật hơn, lấy cảm hứng từ cây trong ảnh thiết kế."
+    },
+    null,
     interactives
   );
 };
@@ -608,7 +752,8 @@ const createWardrobe = (scene, mats, animator, interactives) => {
 const createDesk = (scene, mats, interactives) => {
   const group = new THREE.Group();
   group.name = "gaming desk";
-  group.position.set(5.35, 0, 3.12);
+  group.position.set(5.85, 0, 2.55);
+  group.rotation.y = -Math.PI / 2;
   scene.add(group);
 
   box(group, mats.woodDark, [2.22, 0.12, 0.75], [0, 0.78, 0], "desk top");
@@ -624,6 +769,10 @@ const createDesk = (scene, mats, interactives) => {
     box(group, i % 2 ? mats.neonCyan : mats.neonPink, [0.055, 0.018, 0.055], [-0.28 + i * 0.08, 0.91, 0.16], "rgb keyboard key");
   }
   sphere(group, mats.neonGreen, 0.13, [0.72, 0.89, 0.18], [1.25, 0.42, 0.86], "rgb mouse");
+  cyl(group, mats.soil, 0.09, 0.07, 0.12, [-0.86, 0.9, 0.22], [0, 0, 0], 18, "desk mini plant pot");
+  sphere(group, mats.plant, 0.16, [-0.86, 1.06, 0.22], [0.8, 1.15, 0.8], "desk mini plant");
+  cyl(group, mats.chrome, 0.025, 0.025, 0.42, [-1.02, 1.02, -0.08], [0, 0, 0], 16, "desk lamp stem");
+  cyl(group, mats.yellow, 0.11, 0.07, 0.16, [-1.02, 1.28, -0.08], [0, 0, 0], 20, "desk lamp shade");
   box(group, mats.black, [0.48, 0.92, 0.64], [1.32, 0.58, 0.02], "pc case");
   box(group, mats.blueGlass, [0.04, 0.76, 0.52], [1.07, 0.6, 0.02], "pc glass side");
   cyl(group, mats.neonCyan, 0.11, 0.11, 0.035, [1.04, 0.75, -0.16], [Math.PI / 2, 0, 0], 32, "pc fan");
@@ -800,10 +949,11 @@ const createRgbCables = (scene, mats, interactives) => {
 };
 
 const createLighting = (scene) => {
-  scene.add(new THREE.HemisphereLight("#b9edff", "#0f172a", 1.05));
+  scene.add(new THREE.HemisphereLight("#ffffff", "#d9c0ad", 1.65));
+  scene.add(new THREE.AmbientLight("#ffffff", 0.48));
 
-  const sun = new THREE.DirectionalLight("#fff8e7", 2.8);
-  sun.position.set(-4, 7, 4);
+  const sun = new THREE.DirectionalLight("#fff8e7", 3.55);
+  sun.position.set(-5, 7.6, 5.5);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.left = -11;
@@ -812,15 +962,15 @@ const createLighting = (scene) => {
   sun.shadow.camera.bottom = -8;
   scene.add(sun);
 
-  const cyan = new THREE.PointLight("#22d3ee", 1.8, 8, 1.6);
+  const cyan = new THREE.PointLight("#22d3ee", 1.2, 8, 1.6);
   cyan.position.set(4.5, 2.2, 3.25);
   scene.add(cyan);
 
-  const magenta = new THREE.PointLight("#f472b6", 1.35, 7, 1.8);
+  const magenta = new THREE.PointLight("#f472b6", 0.95, 7, 1.8);
   magenta.position.set(-0.3, 2.5, 2.1);
   scene.add(magenta);
 
-  const green = new THREE.PointLight("#22c55e", 0.9, 5.4, 1.9);
+  const green = new THREE.PointLight("#22c55e", 0.65, 5.4, 1.9);
   green.position.set(7.0, 2.1, -2.9);
   scene.add(green);
 };
@@ -842,23 +992,24 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
   renderer.setSize(mount.clientWidth, mount.clientHeight);
-  renderer.setClearColor("#030712", 1);
+  renderer.setClearColor("#f4f6fb", 1);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 1.28;
   mount.appendChild(renderer.domElement);
+  renderer.domElement.tabIndex = 0;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#030712");
-  scene.fog = new THREE.FogExp2("#06101e", 0.026);
+  scene.background = new THREE.Color("#f4f6fb");
+  scene.fog = new THREE.FogExp2("#f4f6fb", 0.015);
 
   const camera = new THREE.PerspectiveCamera(62, mount.clientWidth / mount.clientHeight, 0.04, 80);
-  const homePosition = new THREE.Vector3(-6.05, 1.55, -2.35);
+  const homePosition = new THREE.Vector3(-6.35, 1.55, -2.85);
   camera.position.copy(homePosition);
-  let yaw = -1.98;
-  let pitch = -0.08;
+  let yaw = -1.95;
+  let pitch = -0.22;
 
   const mats = createMaterials();
   const animator = new Animator();
@@ -878,6 +1029,7 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   createAc(scene, mats, animator, interactives, animated);
   createCurtain(scene, mats, animator, interactives);
   createSofaDining(scene, mats, animator, interactives);
+  createSoftDecor(scene, mats, interactives);
   createBedAndStairs(scene, mats, animator, interactives);
   createWardrobe(scene, mats, animator, interactives);
   createDesk(scene, mats, interactives);
@@ -901,6 +1053,7 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   let hovered = null;
   let disposed = false;
   const keys = new Set();
+  const movementCodes = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "ShiftLeft", "ShiftRight"]);
   let dragging = false;
   let dragMoved = 0;
   let lastPointer = { x: 0, y: 0 };
@@ -968,6 +1121,7 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
 
   const onPointerDown = (event) => {
     updatePointer(event);
+    renderer.domElement.focus();
     dragging = true;
     dragMoved = 0;
     lastPointer = { x: event.clientX, y: event.clientY };
@@ -992,10 +1146,12 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   };
 
   const onKeyDown = (event) => {
+    if (movementCodes.has(event.code)) event.preventDefault();
     keys.add(event.code);
   };
 
   const onKeyUp = (event) => {
+    if (movementCodes.has(event.code)) event.preventDefault();
     keys.delete(event.code);
   };
 
@@ -1030,7 +1186,7 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
     if (keys.has("KeyA") || keys.has("ArrowLeft")) moveVector.sub(right);
     if (keys.has("KeyD") || keys.has("ArrowRight")) moveVector.add(right);
     if (moveVector.lengthSq() > 0) {
-      moveVector.normalize().multiplyScalar((keys.has("ShiftLeft") || keys.has("ShiftRight") ? 3.2 : 1.75) * delta);
+      moveVector.normalize().multiplyScalar((keys.has("ShiftLeft") || keys.has("ShiftRight") ? 4.25 : 2.45) * delta);
       const nextX = camera.position.x + moveVector.x;
       const nextZ = camera.position.z + moveVector.z;
       if (allowed(nextX, camera.position.z)) camera.position.x = nextX;
@@ -1078,8 +1234,8 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   return {
     resetView() {
       camera.position.copy(homePosition);
-      yaw = -1.98;
-      pitch = -0.08;
+      yaw = -1.95;
+      pitch = -0.22;
       camera.fov = 62;
       camera.updateProjectionMatrix();
       applyView();

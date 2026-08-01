@@ -23,9 +23,9 @@ const makeCanvasTexture = (width, height, draw) => {
 const woodTexture = () =>
   makeCanvasTexture(512, 512, (ctx, w, h) => {
     const base = ctx.createLinearGradient(0, 0, w, h);
-    base.addColorStop(0, "#8f5d35");
-    base.addColorStop(0.45, "#b67a44");
-    base.addColorStop(1, "#6b3f24");
+    base.addColorStop(0, "#c98954");
+    base.addColorStop(0.45, "#e5b47c");
+    base.addColorStop(1, "#a9693b");
     ctx.fillStyle = base;
     ctx.fillRect(0, 0, w, h);
 
@@ -47,9 +47,38 @@ const woodTexture = () =>
     for (let i = 0; i < 90; i += 1) {
       const x = Math.random() * w;
       const y = Math.random() * h;
-      ctx.strokeStyle = `rgba(51, 32, 21, ${0.08 + Math.random() * 0.15})`;
+      ctx.strokeStyle = `rgba(78, 48, 26, ${0.06 + Math.random() * 0.12})`;
       ctx.beginPath();
       ctx.ellipse(x, y, 18 + Math.random() * 26, 2 + Math.random() * 4, Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+
+const brickTexture = () =>
+  makeCanvasTexture(1024, 1024, (ctx, w, h) => {
+    ctx.fillStyle = "#f4d8c8";
+    ctx.fillRect(0, 0, w, h);
+    const brickH = 58;
+    const brickW = 146;
+    for (let y = 0; y < h + brickH; y += brickH) {
+      const offset = Math.floor(y / brickH) % 2 ? -brickW / 2 : 0;
+      for (let x = offset; x < w + brickW; x += brickW) {
+        const warm = 205 + Math.floor(Math.random() * 34);
+        const red = 176 + Math.floor(Math.random() * 36);
+        ctx.fillStyle = `rgb(${warm}, ${red}, ${145 + Math.floor(Math.random() * 28)})`;
+        ctx.fillRect(x + 4, y + 4, brickW - 8, brickH - 8);
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.fillRect(x + 10, y + 9, brickW - 24, 4);
+        ctx.fillStyle = "rgba(114,72,52,0.08)";
+        ctx.fillRect(x + 7, y + brickH - 13, brickW - 18, 5);
+      }
+    }
+    ctx.strokeStyle = "rgba(255,250,244,0.82)";
+    ctx.lineWidth = 5;
+    for (let y = 0; y < h + brickH; y += brickH) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
       ctx.stroke();
     }
   });
@@ -93,23 +122,30 @@ const wallTexture = () =>
 const starTexture = () =>
   makeCanvasTexture(1024, 1024, (ctx, w, h) => {
     const gradient = ctx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, w * 0.7);
-    gradient.addColorStop(0, "#101932");
-    gradient.addColorStop(0.55, "#070b1c");
-    gradient.addColorStop(1, "#02040c");
+    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(0.5, "#f6fbff");
+    gradient.addColorStop(1, "#e9eff6");
     ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    const nebula = ctx.createRadialGradient(w * 0.78, h * 0.22, 0, w * 0.78, h * 0.22, w * 0.42);
+    nebula.addColorStop(0, "rgba(244,114,182,0.32)");
+    nebula.addColorStop(0.48, "rgba(34,211,238,0.12)");
+    nebula.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = nebula;
     ctx.fillRect(0, 0, w, h);
 
     for (let i = 0; i < 360; i += 1) {
       const r = Math.random();
-      ctx.fillStyle = r > 0.94 ? "#e0f2fe" : r > 0.82 ? "#a5f3fc" : "#f8fafc";
-      ctx.globalAlpha = 0.25 + Math.random() * 0.75;
+      ctx.fillStyle = r > 0.94 ? "#0f172a" : r > 0.82 ? "#0891b2" : "#64748b";
+      ctx.globalAlpha = 0.16 + Math.random() * 0.34;
       ctx.beginPath();
       ctx.arc(Math.random() * w, Math.random() * h, 0.5 + Math.random() * 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.18)";
+    ctx.strokeStyle = "rgba(124, 58, 237, 0.16)";
     ctx.lineWidth = 2;
     for (let i = 0; i < 12; i += 1) {
       ctx.beginPath();
@@ -143,25 +179,51 @@ const fabricTexture = (base = "#334155", accent = "#22d3ee") =>
   });
 
 const checkerTexture = () =>
-  makeCanvasTexture(512, 512, (ctx, w, h) => {
-    ctx.fillStyle = "#061018";
+  makeCanvasTexture(1024, 512, (ctx, w, h) => {
+    ctx.fillStyle = "#fff7ed";
     ctx.fillRect(0, 0, w, h);
-    for (let x = 0; x < w; x += 64) {
-      for (let y = 0; y < h; y += 64) {
-        ctx.fillStyle = (x / 64 + y / 64) % 2 ? "#0f2a38" : "#111827";
-        ctx.fillRect(x, y, 64, 64);
-      }
-    }
-    ctx.strokeStyle = "rgba(34, 211, 238, 0.38)";
-    ctx.lineWidth = 2;
-    for (let i = 0; i <= w; i += 64) {
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 18;
+    ctx.strokeRect(18, 18, w - 36, h - 36);
+    ctx.strokeStyle = "#b91c1c";
+    ctx.lineWidth = 9;
+    ctx.strokeRect(48, 48, w - 96, h - 96);
+    ctx.strokeStyle = "#111827";
+    ctx.lineWidth = 5;
+    for (let x = 86; x < w - 86; x += 138) {
       ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, h);
+      ctx.moveTo(x, 70);
+      ctx.lineTo(x + 52, 128);
+      ctx.lineTo(x, 186);
+      ctx.lineTo(x - 52, 128);
+      ctx.closePath();
       ctx.stroke();
+      ctx.fillStyle = x % 2 ? "#ea580c" : "#0f766e";
+      ctx.globalAlpha = 0.72;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    for (let x = 110; x < w - 110; x += 185) {
+      ctx.strokeStyle = "#111827";
+      ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(w, i);
+      ctx.moveTo(x, h * 0.52);
+      ctx.lineTo(x + 76, h * 0.28);
+      ctx.lineTo(x + 152, h * 0.52);
+      ctx.lineTo(x + 76, h * 0.76);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = x % 2 ? "#dc2626" : "#f59e0b";
+      ctx.globalAlpha = 0.76;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    for (let x = 34; x < w; x += 28) {
+      ctx.strokeStyle = "rgba(17,24,39,0.45)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, h - 26);
+      ctx.lineTo(x + 12, h - 5);
       ctx.stroke();
     }
   });
@@ -170,27 +232,27 @@ export const createMaterials = () => {
   const textures = {
     wood: repeat(woodTexture(), 5, 4),
     tile: repeat(tileTexture(), 2, 2),
-    wall: repeat(wallTexture(), 3, 2),
+    wall: repeat(brickTexture(), 3.8, 2.4),
     stars: repeat(starTexture(), 2, 1),
-    darkFabric: fabricTexture("#172033", "#22d3ee"),
-    purpleFabric: fabricTexture("#2e1065", "#f0abfc"),
+    darkFabric: fabricTexture("#d7dde8", "#64748b"),
+    purpleFabric: fabricTexture("#8f7d99", "#334155"),
     carpet: repeat(checkerTexture(), 2, 1.5)
   };
 
   const materials = {
     floor: new THREE.MeshStandardMaterial({ map: textures.wood, roughness: 0.55, metalness: 0.04 }),
-    balconyFloor: new THREE.MeshStandardMaterial({ color: "#3e5567", roughness: 0.65, metalness: 0.05 }),
+    balconyFloor: new THREE.MeshStandardMaterial({ color: "#d9e2e8", roughness: 0.58, metalness: 0.04 }),
     bathroomFloor: new THREE.MeshStandardMaterial({ map: textures.tile, roughness: 0.38, metalness: 0.02 }),
     wall: new THREE.MeshStandardMaterial({ map: textures.wall, roughness: 0.72 }),
-    accentWall: new THREE.MeshStandardMaterial({ color: "#07111f", roughness: 0.6, metalness: 0.05 }),
-    ceiling: new THREE.MeshStandardMaterial({ map: textures.stars, roughness: 0.4, metalness: 0.08, emissive: "#050816", emissiveIntensity: 0.45 }),
-    black: new THREE.MeshStandardMaterial({ color: "#020617", roughness: 0.42, metalness: 0.16 }),
-    charcoal: new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.48, metalness: 0.18 }),
-    graphite: new THREE.MeshStandardMaterial({ color: "#1f2937", roughness: 0.55, metalness: 0.24 }),
+    accentWall: new THREE.MeshStandardMaterial({ color: "#f9e9dc", roughness: 0.68, metalness: 0.02 }),
+    ceiling: new THREE.MeshStandardMaterial({ map: textures.stars, roughness: 0.46, metalness: 0.02, emissive: "#f8fbff", emissiveIntensity: 0.42 }),
+    black: new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.42, metalness: 0.14 }),
+    charcoal: new THREE.MeshStandardMaterial({ color: "#263142", roughness: 0.5, metalness: 0.12 }),
+    graphite: new THREE.MeshStandardMaterial({ color: "#4b5563", roughness: 0.55, metalness: 0.18 }),
     chrome: new THREE.MeshStandardMaterial({ color: "#cbd5e1", roughness: 0.18, metalness: 0.72 }),
     white: new THREE.MeshStandardMaterial({ color: "#f8fafc", roughness: 0.45, metalness: 0.02 }),
     cream: new THREE.MeshStandardMaterial({ color: "#e9dfd2", roughness: 0.58 }),
-    bedBase: new THREE.MeshStandardMaterial({ color: "#293449", roughness: 0.54, metalness: 0.08 }),
+    bedBase: new THREE.MeshStandardMaterial({ color: "#5d6278", roughness: 0.54, metalness: 0.08 }),
     mattress: new THREE.MeshStandardMaterial({ map: textures.darkFabric, roughness: 0.72 }),
     blanket: new THREE.MeshStandardMaterial({ map: textures.purpleFabric, roughness: 0.78 }),
     purpleFabric: new THREE.MeshStandardMaterial({ map: textures.purpleFabric, roughness: 0.8 }),
@@ -220,7 +282,7 @@ export const createMaterials = () => {
     yellow: new THREE.MeshStandardMaterial({ color: "#facc15", roughness: 0.52 }),
     blue: new THREE.MeshStandardMaterial({ color: "#38bdf8", roughness: 0.5 }),
     green: new THREE.MeshStandardMaterial({ color: "#22c55e", roughness: 0.54 }),
-    woodDark: new THREE.MeshStandardMaterial({ color: "#4a2d1d", roughness: 0.62, metalness: 0.02 }),
+    woodDark: new THREE.MeshStandardMaterial({ color: "#8a5632", roughness: 0.6, metalness: 0.02 }),
     plant: new THREE.MeshStandardMaterial({ color: "#16a34a", roughness: 0.74 }),
     soil: new THREE.MeshStandardMaterial({ color: "#3f2b1d", roughness: 0.9 }),
     mirror: new THREE.MeshPhysicalMaterial({ color: "#d9fbff", roughness: 0.05, metalness: 0.28, transparent: true, opacity: 0.65 })
