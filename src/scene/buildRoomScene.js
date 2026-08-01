@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { createMaterials } from "./materials.js";
 
 const TAU = Math.PI * 2;
@@ -88,6 +89,12 @@ const catalog = {
     price: "22.000.000 vnd",
     use: "Khu vệ sinh lát gạch, có bồn cầu, lavabo, phòng tắm kính và bồn nước máy giặt."
   },
+  bathroomDoor: {
+    name: "Cửa toilet bản lề êm",
+    price: "3.200.000 vnd",
+    use: "Cửa riêng cho khu toilet/phòng tắm, đặt đúng ở vách ngăn theo mặt bằng để lối đi không bị lẫn với cửa chính.",
+    action: "Click để mở hoặc đóng cửa toilet."
+  },
   dining: {
     name: "Bàn ăn gấp 2 lớp",
     price: "4.400.000 vnd",
@@ -141,7 +148,13 @@ class Animator {
 }
 
 const box = (parent, material, size, position, name = "box") => {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), material);
+  const minSide = Math.min(size[0], size[1], size[2]);
+  const shouldRound = minSide >= 0.08 && size[0] <= 6 && size[1] <= 3 && size[2] <= 6;
+  const radius = Math.min(0.032, minSide * 0.18);
+  const geometry = shouldRound
+    ? new RoundedBoxGeometry(size[0], size[1], size[2], 1, radius)
+    : new THREE.BoxGeometry(size[0], size[1], size[2]);
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.name = name;
   mesh.position.set(position[0], position[1], position[2]);
   mesh.castShadow = true;
@@ -272,12 +285,25 @@ const createRoomShell = (scene, mats, interactives) => {
   box(shell, mats.bathroomFloor, [3.8, 0.13, 2.55], [-5.25, -0.035, 2.95], "bathroom tile floor");
 
   box(shell, mats.wall, [15.5, 3.1, 0.14], [0, 1.55, -4.15], "back wall");
-  box(shell, mats.wall, [0.14, 3.1, 7.6], [-7.62, 1.55, 0.38], "left wall");
+  box(shell, mats.wall, [0.14, 3.1, 0.78], [-7.62, 1.55, -3.72], "left wall before main door");
+  box(shell, mats.wall, [0.14, 3.1, 6.0], [-7.62, 1.55, 0.88], "left wall after main door");
   box(shell, mats.wall, [5.0, 3.1, 0.14], [-5.1, 1.55, 4.27], "front bath wall");
   box(shell, mats.wall, [3.1, 3.1, 0.14], [5.9, 1.55, 4.27], "front desk wall");
   box(shell, mats.wall, [0.14, 3.1, 3.1], [-3.15, 1.55, 2.75], "bath divider");
-  box(shell, mats.wall, [3.75, 3.1, 0.14], [-5.4, 1.55, 1.63], "bath top divider");
+  box(shell, mats.wall, [2.05, 3.1, 0.14], [-6.18, 1.55, 1.63], "bath top divider left");
+  box(shell, mats.wall, [0.7, 3.1, 0.14], [-3.5, 1.55, 1.63], "bath top divider right");
   box(shell, mats.accentWall, [4.8, 3.05, 0.08], [-0.15, 1.58, -4.06], "tv accent wall");
+
+  box(shell, mats.trim, [15.35, 0.08, 0.08], [0, 0.18, -4.0], "back wall baseboard");
+  box(shell, mats.trim, [0.08, 0.08, 5.85], [-7.48, 0.18, 0.92], "left wall baseboard");
+  box(shell, mats.trim, [4.85, 0.08, 0.08], [-5.1, 0.18, 4.12], "front bath baseboard");
+  box(shell, mats.trim, [3.0, 0.08, 0.08], [5.9, 0.18, 4.12], "front desk baseboard");
+  box(shell, mats.trim, [0.12, 2.5, 0.08], [-7.48, 1.3, -3.36], "main door back jamb");
+  box(shell, mats.trim, [0.12, 2.5, 0.08], [-7.48, 1.3, -2.28], "main door front jamb");
+  box(shell, mats.trim, [0.12, 0.08, 1.22], [-7.48, 2.52, -2.82], "main door header");
+  box(shell, mats.trim, [0.08, 2.36, 0.12], [-5.15, 1.25, 1.52], "toilet door left jamb");
+  box(shell, mats.trim, [0.08, 2.36, 0.12], [-4.15, 1.25, 1.52], "toilet door right jamb");
+  box(shell, mats.trim, [1.12, 0.08, 0.12], [-4.65, 2.42, 1.52], "toilet door header");
 
   const ceiling = box(shell, mats.ceiling, [15.2, 0.08, 8.3], [0, 3.12, 0.08], "star ceiling");
   ceiling.receiveShadow = false;
@@ -319,12 +345,39 @@ const createDoor = (scene, mats, animator, interactives) => {
     catalog.door,
     () => {
       const from = pivot.rotation.y;
-      const to = open ? 0 : -Math.PI * 0.58;
+      const to = open ? 0 : Math.PI * 0.52;
       open = !open;
       animator.add(0.68, (v) => {
         pivot.rotation.y = THREE.MathUtils.lerp(from, to, v);
       });
       return open ? "Cửa đã mở" : "Cửa đã đóng";
+    },
+    interactives
+  );
+};
+
+const createBathroomDoor = (scene, mats, animator, interactives) => {
+  const pivot = new THREE.Group();
+  pivot.name = "bathroom door pivot";
+  pivot.position.set(-4.15, 0, 1.58);
+  scene.add(pivot);
+
+  box(pivot, mats.trim, [0.98, 2.18, 0.08], [-0.49, 1.09, 0.02], "bathroom door panel");
+  box(pivot, mats.chrome, [0.18, 0.035, 0.035], [-0.12, 1.08, -0.05], "bathroom door handle");
+  box(pivot, mats.shadowGap, [0.88, 0.02, 0.045], [-0.5, 0.09, -0.03], "bathroom door threshold");
+
+  let open = false;
+  makeInfo(
+    pivot,
+    catalog.bathroomDoor,
+    () => {
+      const from = pivot.rotation.y;
+      const to = open ? 0 : Math.PI / 2;
+      open = !open;
+      animator.add(0.58, (v) => {
+        pivot.rotation.y = THREE.MathUtils.lerp(from, to, v);
+      });
+      return open ? "Cửa toilet đã mở" : "Cửa toilet đã đóng";
     },
     interactives
   );
@@ -618,6 +671,14 @@ const createBedAndStairs = (scene, mats, animator, interactives) => {
   scene.add(bed);
 
   box(bed, mats.bedBase, [3.35, 0.22, 2.26], [0, 2.05, 0], "loft platform");
+  for (const x of [-1.64, 1.64]) {
+    for (const z of [-1.05, 1.05]) {
+      box(bed, mats.woodDark, [0.13, 2.1, 0.13], [x, 1.05, z], "loft bed structural post");
+    }
+  }
+  box(bed, mats.warmWood, [3.48, 0.12, 0.12], [0, 1.92, 1.13], "rear loft support beam");
+  box(bed, mats.warmWood, [0.12, 0.12, 2.18], [-1.72, 1.92, 0], "left loft support beam");
+  box(bed, mats.warmWood, [0.12, 0.12, 2.18], [1.72, 1.92, 0], "right loft support beam");
   box(bed, mats.mattress, [3.12, 0.32, 1.88], [0, 2.35, -0.05], "mattress");
   box(bed, mats.blanket, [1.72, 0.18, 1.78], [0.42, 2.56, -0.04], "blanket");
   box(bed, mats.white, [0.7, 0.18, 0.46], [-1.0, 2.58, -0.56], "pillow");
@@ -629,6 +690,7 @@ const createBedAndStairs = (scene, mats, animator, interactives) => {
 
   const secret = new THREE.Group();
   secret.name = "secret under bed";
+  secret.position.set(0, 0, 1.18);
   box(secret, mats.charcoal, [2.85, 1.42, 0.12], [0, 0.83, -1.03], "secret sliding door");
   box(secret, mats.neonGreen, [1.8, 0.035, 0.045], [0, 1.38, -1.1], "secret led line");
   box(secret, mats.graphite, [1.0, 0.62, 0.8], [-0.82, 0.38, -0.18], "storage box");
@@ -648,6 +710,63 @@ const createBedAndStairs = (scene, mats, animator, interactives) => {
         secret.position.x = THREE.MathUtils.lerp(from, to, v);
       });
       return secretOpen ? "Kho dưới giường đã mở" : "Kho dưới giường đã đóng";
+    },
+    interactives
+  );
+
+  const underCabinet = new THREE.Group();
+  underCabinet.name = "under bed wardrobe cabinet";
+  box(underCabinet, mats.cabinetInterior, [3.08, 1.5, 0.08], [0, 0.84, 0.96], "cabinet back panel");
+  box(underCabinet, mats.warmWood, [0.08, 1.54, 2.06], [-1.55, 0.84, -0.02], "cabinet left side");
+  box(underCabinet, mats.warmWood, [0.08, 1.54, 2.06], [1.55, 0.84, -0.02], "cabinet right side");
+  box(underCabinet, mats.warmWood, [3.16, 0.08, 2.06], [0, 0.1, -0.02], "cabinet plinth");
+  box(underCabinet, mats.warmWood, [3.16, 0.08, 2.06], [0, 1.58, -0.02], "cabinet upper beam");
+  box(underCabinet, mats.warmWood, [0.06, 1.42, 1.92], [-0.42, 0.86, -0.02], "cabinet vertical divider");
+  box(underCabinet, mats.warmWood, [0.06, 1.42, 1.92], [0.68, 0.86, -0.02], "cabinet vertical divider");
+  box(underCabinet, mats.cabinetInterior, [0.98, 0.06, 1.78], [-1.0, 0.62, -0.02], "folded clothes shelf");
+  box(underCabinet, mats.cabinetInterior, [0.8, 0.06, 1.78], [1.08, 0.92, -0.02], "accessory shelf");
+  cyl(underCabinet, mats.chrome, 0.025, 0.025, 0.96, [0.13, 1.32, -0.1], [0, 0, Math.PI / 2], 16, "wardrobe hanging rail");
+  const shirtMats = [mats.blue, mats.white, mats.neonViolet, mats.green, mats.yellow];
+  for (let i = 0; i < shirtMats.length; i += 1) {
+    const x = -0.24 + i * 0.19;
+    box(underCabinet, shirtMats[i], [0.12, 0.58, 0.34], [x, 0.94, -0.22], "hanging shirt");
+    cyl(underCabinet, mats.chrome, 0.025, 0.025, 0.14, [x, 1.26, -0.22], [Math.PI / 2, 0, 0], 8, "shirt hanger");
+  }
+  box(underCabinet, mats.graphite, [0.68, 0.34, 0.52], [-1.02, 0.34, -0.42], "storage fabric bin");
+  box(underCabinet, mats.cream, [0.7, 0.18, 0.44], [-1.02, 0.78, 0.36], "folded blanket stack");
+  box(underCabinet, mats.black, [0.56, 0.3, 0.48], [1.08, 0.36, -0.48], "gaming gear box");
+  sphere(underCabinet, mats.black, 0.12, [1.0, 0.24, 0.48], [1.65, 0.42, 0.75], "left shoe pair");
+  sphere(underCabinet, mats.white, 0.12, [1.25, 0.24, 0.48], [1.65, 0.42, 0.75], "right shoe pair");
+
+  const leftCabinetDoor = new THREE.Group();
+  leftCabinetDoor.name = "left sliding wardrobe door";
+  box(leftCabinetDoor, mats.blueGlass, [1.48, 1.36, 0.08], [-0.76, 0.86, -1.03], "left smoked glass door");
+  box(leftCabinetDoor, mats.chrome, [0.03, 1.05, 0.04], [-0.12, 0.86, -1.09], "left vertical pull");
+  underCabinet.add(leftCabinetDoor);
+
+  const rightCabinetDoor = new THREE.Group();
+  rightCabinetDoor.name = "right sliding wardrobe door";
+  box(rightCabinetDoor, mats.blueGlass, [1.48, 1.36, 0.08], [0.76, 0.86, -1.0], "right smoked glass door");
+  box(rightCabinetDoor, mats.chrome, [0.03, 1.05, 0.04], [0.12, 0.86, -1.06], "right vertical pull");
+  underCabinet.add(rightCabinetDoor);
+  box(underCabinet, mats.neonGreen, [2.85, 0.035, 0.045], [0, 1.42, -1.11], "under bed wardrobe led line");
+  bed.add(underCabinet);
+
+  let cabinetOpen = false;
+  makeInfo(
+    underCabinet,
+    catalog.wardrobe,
+    () => {
+      const leftFrom = leftCabinetDoor.position.x;
+      const rightFrom = rightCabinetDoor.position.x;
+      const leftTo = cabinetOpen ? 0 : -0.72;
+      const rightTo = cabinetOpen ? 0 : 0.72;
+      cabinetOpen = !cabinetOpen;
+      animator.add(0.66, (v) => {
+        leftCabinetDoor.position.x = THREE.MathUtils.lerp(leftFrom, leftTo, v);
+        rightCabinetDoor.position.x = THREE.MathUtils.lerp(rightFrom, rightTo, v);
+      });
+      return cabinetOpen ? "Tủ dưới giường đã mở" : "Tủ dưới giường đã đóng";
     },
     interactives
   );
@@ -820,14 +939,18 @@ const createBathroom = (scene, mats, interactives) => {
 const createWasher = (scene, mats, animator, interactives, animated) => {
   const group = new THREE.Group();
   group.name = "washing machine";
-  group.position.set(-6.82, 0, 0.72);
+  group.position.set(8.2, 0, 2.62);
+  group.rotation.y = Math.PI / 2;
   scene.add(group);
 
-  box(group, mats.white, [0.82, 0.92, 0.72], [0, 0.46, 0], "washer body");
+  box(group, mats.whitePlastic, [0.92, 0.98, 0.78], [0, 0.49, 0], "washer body");
   box(group, mats.graphite, [0.68, 0.16, 0.06], [0, 0.82, -0.37], "washer control panel");
   const door = cyl(group, mats.black, 0.28, 0.28, 0.08, [0, 0.47, -0.39], [Math.PI / 2, 0, 0], 40, "washer door ring");
   const drum = cyl(group, mats.blueGlass, 0.22, 0.22, 0.09, [0, 0.47, -0.43], [Math.PI / 2, 0, 0], 40, "washer glass drum");
   box(group, mats.neonGreen, [0.12, 0.045, 0.035], [0.22, 0.82, -0.42], "washer status led");
+  box(group, mats.chrome, [0.75, 0.035, 0.035], [0, 1.0, -0.22], "washer top trim");
+  cyl(group, mats.chrome, 0.028, 0.028, 0.72, [-0.56, 0.78, 0.18], [0, 0, Math.PI / 2], 16, "washer water pipe");
+  box(group, mats.blue, [0.18, 0.28, 0.14], [0.38, 1.14, 0.02], "detergent bottle");
   door.receiveShadow = false;
   drum.receiveShadow = false;
 
@@ -990,7 +1113,7 @@ const disposeObject = (object) => {
 
 export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
   renderer.setSize(mount.clientWidth, mount.clientHeight);
   renderer.setClearColor("#f4f6fb", 1);
   renderer.shadowMap.enabled = true;
@@ -1000,16 +1123,18 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   renderer.toneMappingExposure = 1.28;
   mount.appendChild(renderer.domElement);
   renderer.domElement.tabIndex = 0;
+  renderer.domElement.style.width = "100%";
+  renderer.domElement.style.height = "100%";
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#f4f6fb");
   scene.fog = new THREE.FogExp2("#f4f6fb", 0.015);
 
   const camera = new THREE.PerspectiveCamera(62, mount.clientWidth / mount.clientHeight, 0.04, 80);
-  const homePosition = new THREE.Vector3(-6.35, 1.55, -2.85);
+  const homePosition = new THREE.Vector3(-6.55, 1.55, -2.82);
   camera.position.copy(homePosition);
-  let yaw = -1.95;
-  let pitch = -0.22;
+  let yaw = -2.04;
+  let pitch = -0.18;
 
   const mats = createMaterials();
   const animator = new Animator();
@@ -1025,13 +1150,13 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   createLighting(scene);
   createRoomShell(scene, mats, interactives);
   createDoor(scene, mats, animator, interactives);
+  createBathroomDoor(scene, mats, animator, interactives);
   createTvConsole(scene, mats, animator, interactives);
   createAc(scene, mats, animator, interactives, animated);
   createCurtain(scene, mats, animator, interactives);
   createSofaDining(scene, mats, animator, interactives);
   createSoftDecor(scene, mats, interactives);
   createBedAndStairs(scene, mats, animator, interactives);
-  createWardrobe(scene, mats, animator, interactives);
   createDesk(scene, mats, interactives);
   createBathroom(scene, mats, interactives);
   createWasher(scene, mats, animator, interactives, animated);
@@ -1159,6 +1284,7 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
     if (!mount.clientWidth || !mount.clientHeight) return;
     camera.aspect = mount.clientWidth / mount.clientHeight;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
     renderer.setSize(mount.clientWidth, mount.clientHeight);
   };
 
@@ -1234,8 +1360,8 @@ export const buildRoomScene = ({ mount, onHover, onFocus }) => {
   return {
     resetView() {
       camera.position.copy(homePosition);
-      yaw = -1.95;
-      pitch = -0.22;
+      yaw = -2.04;
+      pitch = -0.18;
       camera.fov = 62;
       camera.updateProjectionMatrix();
       applyView();

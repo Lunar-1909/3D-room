@@ -4,7 +4,7 @@ const repeat = (texture, x, y) => {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(x, y);
-  texture.anisotropy = 4;
+  texture.anisotropy = 8;
   return texture;
 };
 
@@ -21,7 +21,7 @@ const makeCanvasTexture = (width, height, draw) => {
 };
 
 const woodTexture = () =>
-  makeCanvasTexture(512, 512, (ctx, w, h) => {
+  makeCanvasTexture(1024, 1024, (ctx, w, h) => {
     const base = ctx.createLinearGradient(0, 0, w, h);
     base.addColorStop(0, "#c98954");
     base.addColorStop(0.45, "#e5b47c");
@@ -84,7 +84,7 @@ const brickTexture = () =>
   });
 
 const tileTexture = () =>
-  makeCanvasTexture(512, 512, (ctx, w, h) => {
+  makeCanvasTexture(1024, 1024, (ctx, w, h) => {
     ctx.fillStyle = "#dbe5eb";
     ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = "#aab7c1";
@@ -156,7 +156,7 @@ const starTexture = () =>
   });
 
 const fabricTexture = (base = "#334155", accent = "#22d3ee") =>
-  makeCanvasTexture(256, 256, (ctx, w, h) => {
+  makeCanvasTexture(512, 512, (ctx, w, h) => {
     ctx.fillStyle = base;
     ctx.fillRect(0, 0, w, h);
     for (let i = 0; i < h; i += 5) {
@@ -252,6 +252,13 @@ export const createMaterials = () => {
     chrome: new THREE.MeshStandardMaterial({ color: "#cbd5e1", roughness: 0.18, metalness: 0.72 }),
     white: new THREE.MeshStandardMaterial({ color: "#f8fafc", roughness: 0.45, metalness: 0.02 }),
     cream: new THREE.MeshStandardMaterial({ color: "#e9dfd2", roughness: 0.58 }),
+    trim: new THREE.MeshStandardMaterial({ color: "#f8f1e7", roughness: 0.5, metalness: 0.02 }),
+    warmWood: new THREE.MeshStandardMaterial({ color: "#b87945", roughness: 0.58, metalness: 0.02 }),
+    cabinetInterior: new THREE.MeshStandardMaterial({ color: "#f1e7d7", roughness: 0.62, metalness: 0.02 }),
+    shadowGap: new THREE.MeshStandardMaterial({ color: "#111827", roughness: 0.7, metalness: 0.02 }),
+    rubber: new THREE.MeshStandardMaterial({ color: "#0f172a", roughness: 0.72, metalness: 0.02 }),
+    warmLight: new THREE.MeshStandardMaterial({ color: "#fde68a", emissive: "#f59e0b", emissiveIntensity: 0.9, roughness: 0.34 }),
+    whitePlastic: new THREE.MeshStandardMaterial({ color: "#f9fafb", roughness: 0.32, metalness: 0.01 }),
     bedBase: new THREE.MeshStandardMaterial({ color: "#5d6278", roughness: 0.54, metalness: 0.08 }),
     mattress: new THREE.MeshStandardMaterial({ map: textures.darkFabric, roughness: 0.72 }),
     blanket: new THREE.MeshStandardMaterial({ map: textures.purpleFabric, roughness: 0.78 }),

@@ -38,6 +38,11 @@ button {
   cursor: grab;
 }
 
+.scene-host canvas {
+  display: block;
+  image-rendering: auto;
+}
+
 .scene-host:active {
   cursor: grabbing;
 }
@@ -61,10 +66,10 @@ button {
   gap: 12px;
   min-width: 0;
   padding: 10px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 8px;
-  background: rgba(3, 7, 18, 0.62);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
   backdrop-filter: blur(18px);
 }
 
@@ -77,8 +82,9 @@ button {
 .topbar span {
   max-width: min(48vw, 520px);
   overflow: hidden;
-  color: #a7f3d0;
+  color: #0891b2;
   font-size: 12px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -86,11 +92,11 @@ button {
 .topbar button {
   height: 38px;
   padding: 0 14px;
-  color: #dffbff;
-  border: 1px solid rgba(34, 211, 238, 0.38);
+  color: #0f172a;
+  border: 1px solid rgba(8, 145, 178, 0.22);
   border-radius: 8px;
-  background: rgba(8, 47, 73, 0.6);
-  box-shadow: 0 12px 32px rgba(8, 145, 178, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 32px rgba(8, 145, 178, 0.13);
   pointer-events: auto;
 }
 
